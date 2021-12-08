@@ -13,7 +13,7 @@ PyTorch implementation of gathering demonstration data tested on the following e
 ### Usage
 
 - To gather the demonstration data run the 'Gathering-Demonstration.py'
-
+- The gathered demonstration data could be used for imitation learning
 
 ## Requirements
 ```
