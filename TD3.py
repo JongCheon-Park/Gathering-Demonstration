@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from utils import ExpertTraj
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -64,7 +63,6 @@ class TD3:
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=lr)
 
 
-        self.expert = ExpertTraj('LunarLanderContinuous-v2')
         self.loss_fn = nn.BCELoss()
         betas = (0.5, 0.999)  # betas for adam optimizer
         self.discriminator = Discriminator(state_dim, action_dim).to(device)
@@ -90,38 +88,6 @@ class TD3:
         state = torch.FloatTensor(state.reshape(1, -1)).to(device)
         action = torch.FloatTensor(action.reshape(1, -1)).to(device)
         return self.discriminator(state, action).cpu().data.numpy().flatten()
-
-    def reward_update(self, n_iter, batch_size, replay_buffer):
-        for i in range(n_iter):
-            # sample expert transitions
-            exp_state, exp_action = self.expert.sample(batch_size)
-            exp_state = torch.FloatTensor(exp_state).to(device)
-            exp_action = torch.FloatTensor(exp_action).to(device)
-
-            state, action_, reward, next_state, done = replay_buffer.sample(batch_size)
-            state = torch.FloatTensor(state).to(device)
-            action = torch.FloatTensor(action_).to(device)
-
-            #######################
-            # update discriminator
-            #######################
-            self.optim_discriminator.zero_grad()
-
-            # label tensors
-            exp_label = torch.full((batch_size, 1), 1, device=device)
-            policy_label = torch.full((batch_size, 1), 0, device=device)
-
-            # with expert transitions
-            prob_exp = self.discriminator(exp_state, exp_action)
-            loss = self.loss_fn(prob_exp, exp_label)
-
-            # with policy transitions
-            prob_policy = self.discriminator(state, action)
-            loss += self.loss_fn(prob_policy, policy_label)
-
-            # take gradient step
-            loss.backward()
-            self.optim_discriminator.step()
 
 
     def update(self, replay_buffer, n_iter, batch_size, gamma, polyak, policy_noise, noise_clip, policy_delay):
@@ -207,7 +173,4 @@ class TD3:
         self.actor.load_state_dict(torch.load('%s/%s_actor.pth' % (directory, name), map_location=lambda storage, loc: storage))
         self.actor_target.load_state_dict(torch.load('%s/%s_actor_target.pth' % (directory, name), map_location=lambda storage, loc: storage))
         
-        
-        
-      
         
