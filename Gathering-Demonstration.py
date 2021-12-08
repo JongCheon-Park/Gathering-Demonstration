@@ -3,8 +3,6 @@ from TD3 import TD3
 from PIL import Image
 
 
-
-
 def test():
     env_name = "LunarLanderContinuous-v2"
     random_seed = 0
@@ -62,6 +60,5 @@ def test():
     f2.close()
 if __name__ == '__main__':
     test()
-    
     
     
